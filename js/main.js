@@ -1,112 +1,145 @@
-var Vehicle = Backbone.Model.extend({
-	defaults: {
-		id: Math.floor((Math.random())*100)+1,
-		registration: "0000000000",
-		make: "No Make",
-		model: "No Model",
-		color: "white"
-	}
-});
-
-var Vehicles = Backbone.Collection.extend({
-	model: Vehicle
-});
-
-var VehicleView = Backbone.View.extend({
-	tagName: 'li',
-	attributes: function() {
-		var color = this.model.get("color");
-		return {
-			"data-color": color
-		}
-	},
+var Car = Backbone.Model.extend({
 	initialize: function() {
-		this.$el.attr("id", 'car' + this.model.get('id'));
+		this.set("id", Math.floor(Math.random()*100)+1)
 	},
-	events: {
-		"click .btn-delete": "deleteVehicle"
-	},
-	render: function() {
-		//this.$el.html(this.model.get("registration"));
-		var template = _.template($("#carTemplate").html());
-		var html = template(this.model.toJSON());
-		this.$el.html(html);
-		return this;
-	},
-	deleteVehicle: function(e) {
-		this.$el.remove();
+	defaults: {
+		make: "No make",
+		model: "No model"
 	}
 });
 
-var VehiclesView = Backbone.View.extend({
-	initialize: function(options) {
-		var self = this;
-		this.bus = options.bus;
-		this.bus.on("vehicleAdded", this.addVehicle, this);
-		this.model.on("add", function(vehicle) {
-			var vehicleView = new VehicleView({ model: vehicle })
-			self.$el.append(vehicleView.render().$el);
-		}, this);
+var Boat = Backbone.Model.extend({
+	initialize: function() {
+		this.set("id", Math.floor(Math.random()*100)+1)
 	},
+	defaults: {
+		make: "No make",
+		model: "No model"
+	}
+});
+
+var Cars = Backbone.Collection.extend({
+	model: Car
+});
+
+var Boats = Backbone.Collection.extend({
+	model: Boat
+});
+
+var CarView = Backbone.View.extend({
+	tagName: 'li',
+	render: function() {
+		this.$el.html(this.model.get("model"));
+		return this;
+	}
+});
+
+var BoatView = Backbone.View.extend({
+	tagName: 'li',
+	render: function() {
+		this.$el.html(this.model.get("model"));
+		return this;
+	}	
+});
+
+var NavView = Backbone.View.extend({
+	events: {
+		"click": "navigateRoute"
+	},
+	navigateRoute: function(e) {
+		var userClicked = $(e.target).data("url");
+		router.navigate(userClicked, { trigger: true });
+
+	}
+});
+
+var HomeView = Backbone.View.extend({
+	render: function() {
+		this.$el.html("<h1>Welcome</h1><p>The Super Car & Boat Mega Show!</p>");
+		return this;
+	}
+});
+
+var CarsView = Backbone.View.extend({
 	render: function() {
 		var self = this;
-		this.model.each(function(vehicle) {
-			var vehicleView = new VehicleView({ model: vehicle });
-			self.$el.append(vehicleView.render().$el);
+		this.$el.html("");
+		this.model.each(function(car) {
+			var carView = new CarView({ model: car });
+			self.$el.append(carView.render().$el);
 		});
 		return this;
-	},
-	addVehicle: function(e) {
-		console.log("About to add a vehicle!");
-		this.model.add({ registration: e.reg });
 	}
 });
 
-var NewVehicleView = Backbone.View.extend({
-	tagName: 'form',
-	events: {
-		"click .btn-add": "addVehicle"
-	},
-	initialize: function(options) {
-		this.bus = options.bus;
-	},
+var BoatsView = Backbone.View.extend({
 	render: function() {
-		var template = _.template($('#newCarTemplate').html());
-		var html = template({});
-		this.$el.html(html);
+		var self = this;
+		this.$el.html("");
+		this.model.each(function(boat){
+			var boatView = new BoatView({ model: boat });
+			self.$el.append(boatView.render().$el);
+		});
 		return this;
-	},
-	addVehicle: function(e) {
-		this.bus.trigger("vehicleAdded", { reg: this.$('#carInput').val() })
 	}
 });
 
-var bus = _.extend({}, Backbone.Events);
-
-var vehicles = new Vehicles([
+var cars = new Cars([
 	{
-		id: 1,
-		registration: "0002938293",
 		make: "Honda",
-		model: "Accord",
-		color: "purple"
+		model: "Accord"
 	},
 	{
-		id: 2,
-		registration: "0003948822",
-		make: "Ford",
-		model: "Focus",
-		color: "green"
-	},
-	{
-		id: 3,
-		registration: "0004938229",
 		make: "Toyota",
-		model: "Camry",
-		color: "red"
+		model: "Corolla"
+	},
+	{
+		make: "Ford",
+		model: "F150"
 	}
 ]);
-var newVehicleView = new NewVehicleView({ model: {}, el: '#newcar', bus: bus });
-var vehiclesView = new VehiclesView({ model: vehicles, el: 'ul#cars', bus: bus });
-newVehicleView.render();
-vehiclesView.render();
+
+var boats = new Boats([
+	{
+		make: "Pursuit",
+		model: "2850 Angler"
+	},
+	{
+		make: "Boston Whaler",
+		model: "Island Runner"
+	},
+	{
+		make: "Ocean",
+		model: "4250 Statesman"
+	}
+]);
+
+var AppRouter = Backbone.Router.extend({
+	routes: {
+		"home": "viewHome",
+		"cars": "viewCars",
+		"boats": "viewBoats",
+		"*other": "viewDefault"
+	},
+	viewHome: function() {
+		var homeView = new HomeView({ el: '#container' });
+		homeView.render();
+	},
+	viewCars: function() {
+		var carsView = new CarsView({ model: cars, el: '#container' });
+		carsView.render();
+	},
+	viewBoats: function() {
+		var boatsView = new BoatsView({ model: boats, el: '#container' });
+		boatsView.render();
+	},
+	viewDefault: function() {
+
+	}
+});
+
+var navView = new NavView({ el: '#main-nav' });
+var homeView = new HomeView({ el: '#container' });
+homeView.render();
+var router = new AppRouter();
+Backbone.history.start();
